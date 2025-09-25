@@ -5,7 +5,7 @@ cd "$HOME/Downloads" || exit 1
 
 # Set up variables
 CCLEAR_HELP_DIR="$HOME/cclear-help"
-SP_DIR="cClear_SP_User_Guide"
+TMP_DIR="User_Guide"
 ZIP_FILE="cClear_SP_User_Guide_SP_HTML5.zip"
 PDF_FILE="cClear_SP_User_Guide.pdf"
 
@@ -29,7 +29,7 @@ fi
 
 # Extract the zip file
 echo "Extracting $ZIP_FILE..."
-if unzip -q "$ZIP_FILE" -d "$SP_DIR"; then
+if unzip -q "$ZIP_FILE" -d "$TMP_DIR"; then
     echo "Extraction successful"
 else
     echo "Error: Failed to extract $ZIP_FILE"
@@ -50,13 +50,15 @@ fi
 
 # Move files to destination
 echo "Moving files to $CCLEAR_HELP_DIR/container..."
-if [[ -d "$SP_DIR/cClear_SP_User_Guide/out" ]]; then
-    cp -r "$SP_DIR/cClear_SP_User_Guide/out"/* "$CCLEAR_HELP_DIR/container/" || {
+# Find the first subdirectory in TMP_DIR that contains an 'out' folder
+EXTRACTED_DIR=$(find "$TMP_DIR" -maxdepth 1 -type d -not -path "$TMP_DIR" | head -1)
+if [[ -n "$EXTRACTED_DIR" && -d "$EXTRACTED_DIR/out" ]]; then
+    cp -r "$EXTRACTED_DIR/out"/* "$CCLEAR_HELP_DIR/container/" || {
         echo "Error: Failed to copy files"
         exit 1
     }
 else
-    echo "Error: $SP_DIR/cClear_SP_User_Guide/out directory not found after extraction"
+    echo "Error: No subdirectory with 'out' folder found after extraction"
     exit 1
 fi
 
@@ -64,7 +66,7 @@ fi
 rm -f "$CCLEAR_HELP_DIR/container/transformation.log"
 
 # Clean up extracted directory
-rm -rf "$SP_DIR"
+rm -rf "$TMP_DIR"
 
 echo "Moving PDF file..."
 if mv "$PDF_FILE" "$CCLEAR_HELP_DIR/container/help.pdf"; then
